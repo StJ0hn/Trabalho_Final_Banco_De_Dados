@@ -1,5 +1,4 @@
--- VIEW 1: Ficha de Treino Detalhada
--- Objetivo: Visualizar treino, cliente e personal numa única tabela virtual.
+-- View 1: Ficha de Treino (Une Cliente, Treino e Personal)
 CREATE OR REPLACE VIEW vw_ficha_treino AS
 SELECT
     t.id_treino,
@@ -12,8 +11,7 @@ JOIN cliente c ON t.id_cliente = c.id_cliente
 JOIN personal p ON t.id_personal = p.id_funcionario
 JOIN funcionario f ON p.id_funcionario = f.id_funcionario;
 
--- VIEW 2: Relatório de Manutenção e Limpeza
--- Objetivo: Monitorizar equipamentos e seus responsáveis técnicos.
+-- View 2: Status de Equipamentos e Responsáveis (Mecânico/Faxineiro)
 CREATE OR REPLACE VIEW vw_manutencao_equipamentos AS
 SELECT
     e.id_equipamento,
@@ -21,7 +19,8 @@ SELECT
     e.estado_conservacao,
     fm.nome AS mecanico_responsavel,
     m.status_conserto,
-    ff.nome AS faxineiro_responsavel
+    ff.nome AS faxineiro_responsavel,
+    fa.status_limpeza
 FROM equipamento e
 LEFT JOIN mecanico m ON e.id_funcionario_mecanico = m.id_funcionario
 LEFT JOIN funcionario fm ON m.id_funcionario = fm.id_funcionario

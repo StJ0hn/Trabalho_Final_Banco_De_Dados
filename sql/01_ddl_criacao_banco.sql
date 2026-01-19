@@ -1,19 +1,7 @@
--- 1. LIMPEZA DE SEGURANÇA (Reset)
-DROP TABLE IF EXISTS pagamento CASCADE;
-DROP TABLE IF EXISTS treino CASCADE;
-DROP TABLE IF EXISTS cliente CASCADE;
-DROP TABLE IF EXISTS plano CASCADE;
-DROP TABLE IF EXISTS equipamento CASCADE;
-DROP TABLE IF EXISTS atendente CASCADE;
-DROP TABLE IF EXISTS faxineiro CASCADE;
-DROP TABLE IF EXISTS mecanico CASCADE;
-DROP TABLE IF EXISTS personal CASCADE;
-DROP TABLE IF EXISTS funcionario CASCADE;
-DROP TABLE IF EXISTS proprietario CASCADE;
-DROP TABLE IF EXISTS log_auditoria CASCADE;
+-- Limpeza inicial
+DROP TABLE IF EXISTS pagamento, treino, cliente, plano, equipamento, atendente, faxineiro, mecanico, personal, funcionario, proprietario, log_auditoria CASCADE;
 
--- 2. ESTRUTURA DAS TABELAS (DDL)
-
+-- Tabelas
 CREATE TABLE proprietario (
     cpf VARCHAR(14) PRIMARY KEY,
     nome VARCHAR(150) NOT NULL,
@@ -25,11 +13,10 @@ CREATE TABLE funcionario (
     nome VARCHAR(150) NOT NULL,
     salario DECIMAL(10, 2) NOT NULL,
     data_admissao DATE NOT NULL,
-    tipo VARCHAR(50) NOT NULL, -- 'PERSONAL', 'MECANICO', etc.
+    tipo VARCHAR(50) NOT NULL,
     cpf_proprietario VARCHAR(14) NOT NULL
 );
 
--- Tabelas de Especialização (Herança Tabela-por-Classe)
 CREATE TABLE personal (
     id_funcionario INTEGER PRIMARY KEY,
     cref VARCHAR(20) NOT NULL
@@ -89,49 +76,37 @@ CREATE TABLE pagamento (
     id_cliente INTEGER NOT NULL
 );
 
--- 3. DEFINIÇÃO DE RELACIONAMENTOS (Foreign Keys)
-
--- Vínculo Proprietário -> Funcionário
+-- Relacionamentos (FKs)
 ALTER TABLE funcionario ADD FOREIGN KEY (cpf_proprietario) REFERENCES proprietario(cpf);
 
--- Herança (Filho -> Pai)
+-- Herança
 ALTER TABLE personal ADD FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario) ON DELETE CASCADE;
 ALTER TABLE mecanico ADD FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario) ON DELETE CASCADE;
 ALTER TABLE faxineiro ADD FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario) ON DELETE CASCADE;
 ALTER TABLE atendente ADD FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario) ON DELETE CASCADE;
 
--- Equipamento
+-- Operacional
 ALTER TABLE equipamento ADD FOREIGN KEY (cpf_proprietario) REFERENCES proprietario(cpf);
 ALTER TABLE equipamento ADD FOREIGN KEY (id_funcionario_mecanico) REFERENCES mecanico(id_funcionario);
 ALTER TABLE equipamento ADD FOREIGN KEY (id_funcionario_faxineiro) REFERENCES faxineiro(id_funcionario);
 
--- Plano
 ALTER TABLE plano ADD FOREIGN KEY (id_funcionario_atendente) REFERENCES atendente(id_funcionario);
-
--- Cliente
 ALTER TABLE cliente ADD FOREIGN KEY (id_plano_atual) REFERENCES plano(id_plano);
-
--- Treino
 ALTER TABLE treino ADD FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente) ON DELETE CASCADE;
 ALTER TABLE treino ADD FOREIGN KEY (id_personal) REFERENCES personal(id_funcionario);
-
--- Pagamento
 ALTER TABLE pagamento ADD FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente);
 
--- 4. POVOAMENTO DE DADOS (DML/SEED)
+-- Dados Iniciais (Seed)
+INSERT INTO proprietario (cpf, nome, saldo) VALUES ('092.533.444-05', 'Raquel Santos', 2500.00);
 
--- Proprietario
-INSERT INTO proprietario (cpf, nome, saldo) VALUES
-('092.533.444-05', 'Raquel Santos', 2500.00);
-
--- Funcionarios (Genérico)
+-- Funcionários
 INSERT INTO funcionario (nome, salario, data_admissao, tipo, cpf_proprietario) VALUES
 ('Carlos Silva', 3500.00, '2022-01-10', 'PERSONAL', '092.533.444-05'),
 ('Ana Souza', 2500.00, '2023-03-15', 'FAXINEIRO', '092.533.444-05'),
 ('Marcos Lima', 3000.00, '2021-08-20', 'MECANICO', '092.533.444-05'),
 ('Julia Atendente', 2000.00, '2024-01-01', 'ATENDENTE', '092.533.444-05');
 
--- Funcionarios (Especialização - IDs assumidos pela ordem serial: 1, 2, 3, 4)
+-- Especializações (IDs sequenciais 1, 2, 3, 4)
 INSERT INTO personal (id_funcionario, cref) VALUES (1, '123456-G/CE');
 INSERT INTO faxineiro (id_funcionario, status_limpeza) VALUES (2, 'Geral');
 INSERT INTO mecanico (id_funcionario, status_conserto) VALUES (3, 'Ok');
@@ -162,8 +137,7 @@ INSERT INTO treino (descricao, id_cliente, id_personal) VALUES
 INSERT INTO pagamento (valor, forma_pagamento, data_pagamento, data_vencimento, id_cliente) VALUES
 (120.00, 'PIX', '2025-01-05', '2025-01-10', 1);
 
--- 5. ATUALIZAÇÃO DE SEQUÊNCIAS (CRÍTICO)
--- Garante que os próximos INSERTs automáticos do Python não falhem.
+-- Reset de sequências (Importante para o sistema não falhar nos inserts)
 SELECT setval(pg_get_serial_sequence('funcionario', 'id_funcionario'), coalesce(max(id_funcionario), 1)) FROM funcionario;
 SELECT setval(pg_get_serial_sequence('cliente', 'id_cliente'), coalesce(max(id_cliente), 1)) FROM cliente;
 SELECT setval(pg_get_serial_sequence('plano', 'id_plano'), coalesce(max(id_plano), 1)) FROM plano;
