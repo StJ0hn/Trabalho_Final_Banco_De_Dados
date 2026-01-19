@@ -16,7 +16,7 @@ O objetivo deste trabalho prático é desenvolver um sistema completo de gerenci
 * **Linguagem:** Python 
 * **SGBD:** PostgreSQL
 * **Driver:** Psycopg2
-* **Modelagem:** BrModelo / StarUML 
+* **Modelagem:** dbDiagram.io / drawn.io 
 
 ## Estrutura do Projeto
 A organização dos diretórios segue a divisão de responsabilidades:
